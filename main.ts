@@ -2,26 +2,53 @@ const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 const RADIUS = 20;
 
+const DELTA_STEP = 1;
+const RAY_SPREAD = 10;
+
 type TPoint = {
   x: number;
   y: number;
 };
 
 class Sun {
-  private x: number;
-  private y: number;
+  private center: TPoint;
   private r: number;
 
   constructor(x: number, y: number, r: number) {
-    this.x = x;
-    this.y = y;
+    this.center = {
+      x, y
+    }
     this.r = r;
   }
 
+  private ray(context: CanvasRenderingContext2D, heading: number) {
+    var x = this.center.x;
+    var y = this.center.y;
+    var [x2, y2] = moveByHeading(x, y, heading);
+    while (insideCanvas(x2, y2)) {
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(x2, y2);
+      context.stroke();
+      context.closePath();
+      x = x2; y = y2;
+      [x2, y2] = moveByHeading(x, y, heading);
+    }
+  }
+
+  private rays(context: CanvasRenderingContext2D) {
+    var heading = 0
+    while (heading < 360) {
+      this.ray(context, heading);
+      heading += RAY_SPREAD;
+    }
+  }
+
   public draw(context: CanvasRenderingContext2D) {
+    this.rays(context);
     context.beginPath();
-    context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-    context.stroke();
+    context.arc(this.center.x, this.center.y, this.r, 0, 2 * Math.PI);
+    context.fill();
   }
 };
 
@@ -111,5 +138,14 @@ class DrawingApp {
     }
   }
 }
+
+const insideCanvas = (x: number, y: number): boolean =>
+  x > 0 && y > 0 && x < CANVAS_WIDTH && y < CANVAS_HEIGHT
+
+const moveByHeading = (x: number, y: number, heading: number): [number, number] =>
+  [
+    x + DELTA_STEP * Math.cos(heading * Math.PI / 180),
+    y + DELTA_STEP * Math.sin(heading * Math.PI / 180),
+  ]
 
 new DrawingApp();
