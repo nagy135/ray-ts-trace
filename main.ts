@@ -2,6 +2,11 @@ type TPoint = {
   x: number;
   y: number;
 };
+
+// class Sun {
+//   private x = 
+// };
+
 class DrawingApp {
   private canvas: HTMLCanvasElement;
   private context: CanvasRenderingContext2D;
@@ -56,13 +61,14 @@ class DrawingApp {
     }
   }
 
-  private clearCanvas() {
+  private clearCanvas(clearWalls = false) {
     this.context
       .clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (clearWalls) this.walls = [];
   }
 
   private clearEventHandler = () => {
-    this.clearCanvas();
+    this.clearCanvas(true);
   }
 
   private pressEventHandler = (e: MouseEvent | TouchEvent) => {
