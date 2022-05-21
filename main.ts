@@ -1,15 +1,34 @@
+const CANVAS_WIDTH = 500;
+const CANVAS_HEIGHT = 500;
+const RADIUS = 20;
+
 type TPoint = {
   x: number;
   y: number;
 };
 
-// class Sun {
-//   private x = 
-// };
+class Sun {
+  private x: number;
+  private y: number;
+  private r: number;
+
+  constructor(x: number, y: number, r: number) {
+    this.x = x;
+    this.y = y;
+    this.r = r;
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    context.beginPath();
+    context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+    context.stroke();
+  }
+};
 
 class DrawingApp {
   private canvas: HTMLCanvasElement;
   private context: CanvasRenderingContext2D;
+  private sun: Sun;
 
   private firstClick: TPoint | null = null;
   private walls: [TPoint, TPoint][] = [];
@@ -22,6 +41,8 @@ class DrawingApp {
     context.lineJoin = 'round';
     context.strokeStyle = 'black';
     context.lineWidth = 1;
+
+    this.sun = new Sun(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, RADIUS);
 
     this.canvas = canvas;
     this.context = context;
@@ -41,13 +62,15 @@ class DrawingApp {
   }
 
   private redraw() {
-    for (const wallPair of this.walls){
+    for (const wallPair of this.walls) {
       this.context.beginPath();
       this.context.moveTo(wallPair[0].x, wallPair[0].y);
       this.context.lineTo(wallPair[1].x, wallPair[1].y);
       this.context.stroke();
       this.context.closePath();
     }
+
+    this.sun.draw(this.context);
   }
 
   private clickedAt(x: number, y: number) {
