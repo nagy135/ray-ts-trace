@@ -3,22 +3,28 @@ const CANVAS_HEIGHT = 500;
 const RADIUS = 20;
 
 const DELTA_STEP = 1;
-const RAY_SPREAD = 10;
+const RAY_SPREAD = 3;
 
 type TPoint = {
   x: number;
   y: number;
 };
 
+
+type TTuple<T = number> = [T, T]
+
 class Sun {
   private center: TPoint;
   private r: number;
 
-  constructor(x: number, y: number, r: number) {
+  public walls: TTuple<TPoint>[];
+
+  constructor(x: number, y: number, r: number, walls: TTuple<TPoint>[]) {
     this.center = {
       x, y
     }
     this.r = r;
+    this.walls = walls;
   }
 
   private ray(context: CanvasRenderingContext2D, heading: number) {
@@ -26,6 +32,28 @@ class Sun {
     var y = this.center.y;
     var [x2, y2] = moveByHeading(x, y, heading);
     while (insideCanvas(x2, y2)) {
+
+      let intersected = false;
+      for (const wall of this.walls) {
+        if (
+          didIntersect(
+            [
+              [wall[0].x, wall[0].y],
+              [wall[1].x, wall[1].y]
+            ], [
+            [x, y],
+            [x2, y2]
+          ]
+          )
+        ) {
+          intersected = true;
+          break;
+        }
+      }
+      if (intersected) {
+        break;
+      }
+
       context.beginPath();
       context.moveTo(x, y);
       context.lineTo(x2, y2);
@@ -58,7 +86,7 @@ class DrawingApp {
   private sun: Sun;
 
   private firstClick: TPoint | null = null;
-  private walls: [TPoint, TPoint][] = [];
+  private walls: TTuple<TPoint>[] = [];
 
   constructor() {
     let canvas = document.getElementById('canvas') as
@@ -69,7 +97,7 @@ class DrawingApp {
     context.strokeStyle = 'black';
     context.lineWidth = 1;
 
-    this.sun = new Sun(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, RADIUS);
+    this.sun = new Sun(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, RADIUS, this.walls);
 
     this.canvas = canvas;
     this.context = context;
@@ -139,13 +167,44 @@ class DrawingApp {
   }
 }
 
+const line = (t: TTuple<TTuple<number>>): [number, number, number] => {
+  const A = (t[0][1] - t[1][1])
+  const B = (t[1][0] - t[0][0])
+  const C = (t[0][0] * t[1][1] - t[1][0] * t[0][1])
+  return [A, B, -C]
+}
+
+const didIntersect = (
+  L1: TTuple<TTuple<number>>,
+  L2: TTuple<TTuple<number>>,
+): boolean => {
+  const l1: [number, number, number] = line(L1);
+  const l2: [number, number, number] = line(L2);
+  const D = l1[0] * l2[1] - l1[1] * l2[0]
+  if (D !== 0) {
+    const x = (l1[2] * l2[1] - l1[1] * l2[2]) / D;
+    const y = (l1[0] * l2[2] - l1[2] * l2[0]) / D;
+    return x >= Math.min(L2[0][0], L2[1][0]) &&
+      x <= Math.max(L2[0][0], L2[1][0]) &&
+      y >= Math.min(L2[0][1], L2[1][1]) &&
+      y <= Math.max(L2[0][1], L2[1][1]) &&
+      x >= Math.min(L1[0][0], L1[1][0]) &&
+      x <= Math.max(L1[0][0], L1[1][0]) &&
+      y >= Math.min(L1[0][1], L1[1][1]) &&
+      y <= Math.max(L1[0][1], L1[1][1]);
+  } else return false;
+}
+
+// def isBetween(a, b, c):
+//
+
 const insideCanvas = (x: number, y: number): boolean =>
   x > 0 && y > 0 && x < CANVAS_WIDTH && y < CANVAS_HEIGHT
 
 const moveByHeading = (x: number, y: number, heading: number): [number, number] =>
   [
-    x + DELTA_STEP * Math.cos(heading * Math.PI / 180),
-    y + DELTA_STEP * Math.sin(heading * Math.PI / 180),
+    Math.round(x + DELTA_STEP * Math.cos(heading * Math.PI / 180)),
+    Math.round(y + DELTA_STEP * Math.sin(heading * Math.PI / 180)),
   ]
 
 new DrawingApp();
