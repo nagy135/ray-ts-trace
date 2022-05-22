@@ -2,8 +2,8 @@ const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 const RADIUS = 20;
 
-const DELTA_STEP = 1;
-const RAY_SPREAD = 3;
+const DELTA_STEP = 10;
+const RAY_SPREAD = 36;
 
 type TPoint = {
   x: number;
@@ -33,25 +33,24 @@ class Sun {
     var [x2, y2] = moveByHeading(x, y, heading);
     while (insideCanvas(x2, y2)) {
 
-      let intersected = false;
       for (const wall of this.walls) {
-        if (
-          didIntersect(
-            [
-              [wall[0].x, wall[0].y],
-              [wall[1].x, wall[1].y]
-            ], [
-            [x, y],
-            [x2, y2]
-          ]
-          )
-        ) {
-          intersected = true;
+
+        const intersection = didIntersect(
+          [
+            [wall[0].x, wall[0].y],
+            [wall[1].x, wall[1].y]
+          ], [
+          [x, y],
+          [x2, y2]
+        ]
+        );
+
+        if (intersection !== null) {
+          x2 = intersection[0];
+          y2 = intersection[1];
+          heading = (heading + 180 ) % 360;
           break;
         }
-      }
-      if (intersected) {
-        break;
       }
 
       context.beginPath();
@@ -177,22 +176,23 @@ const line = (t: TTuple<TTuple<number>>): [number, number, number] => {
 const didIntersect = (
   L1: TTuple<TTuple<number>>,
   L2: TTuple<TTuple<number>>,
-): boolean => {
+): TTuple<number> | null => {
   const l1: [number, number, number] = line(L1);
   const l2: [number, number, number] = line(L2);
   const D = l1[0] * l2[1] - l1[1] * l2[0]
   if (D !== 0) {
     const x = (l1[2] * l2[1] - l1[1] * l2[2]) / D;
     const y = (l1[0] * l2[2] - l1[2] * l2[0]) / D;
-    return x >= Math.min(L2[0][0], L2[1][0]) &&
+    if (x >= Math.min(L2[0][0], L2[1][0]) &&
       x <= Math.max(L2[0][0], L2[1][0]) &&
       y >= Math.min(L2[0][1], L2[1][1]) &&
       y <= Math.max(L2[0][1], L2[1][1]) &&
       x >= Math.min(L1[0][0], L1[1][0]) &&
       x <= Math.max(L1[0][0], L1[1][0]) &&
       y >= Math.min(L1[0][1], L1[1][1]) &&
-      y <= Math.max(L1[0][1], L1[1][1]);
-  } else return false;
+      y <= Math.max(L1[0][1], L1[1][1])) return [x, y];
+    else return null;
+  } else return null;
 }
 
 // def isBetween(a, b, c):
